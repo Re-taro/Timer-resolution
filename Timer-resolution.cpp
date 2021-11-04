@@ -5,11 +5,14 @@
 #include "Timer-resolution.h"
 
 #define MAX_LOADSTRING 100
+#define TimerID 1
 
 // グローバル変数:
 HINSTANCE hInst;                                // 現在のインターフェイス
 WCHAR szTitle[MAX_LOADSTRING];                  // タイトル バーのテキスト
 WCHAR szWindowClass[MAX_LOADSTRING];            // メイン ウィンドウ クラス名
+int counter;
+SYSTEMTIME stStart, stStop;
 
 // このコード モジュールに含まれる関数の宣言を転送します:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -121,6 +124,19 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY  - 中止メッセージを表示して戻る
 //
 //
+
+void calcElapse(const SYSTEMTIME& begin, const SYSTEMTIME& end, SYSTEMTIME& elapse)
+{
+
+}
+
+void printTime(HDC hdc, int x, int y, const SYSTEMTIME& st)
+{
+    TCHAR str[64];
+    wsprintf(str, TEXT("%02d:%02d:%02d:%02d"), st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+    TextOut(hdc, x, y, str, lstrlen(str));
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -153,6 +169,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+    case WM_CREATE:
+        counter = 0;
+        SetTimer(hWnd, TimerID, 1, NULL);
+        break;
+    case WM_CLOSE:
+        KillTimer(hWnd, TimerID);
+        DestroyWindow(hWnd);
+        break;
+    case WM_TIMER:
+        if (wParam != TimerID) 
+        {
+            return DefWindowProc(hWnd, message, wParam, lParam);
+        }
+
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
