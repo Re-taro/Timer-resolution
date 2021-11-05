@@ -3,6 +3,7 @@
 
 #include "framework.h"
 #include "Timer-resolution.h"
+#include <fstream>
 
 #define MAX_LOADSTRING 100
 #define TimerID 1
@@ -12,7 +13,9 @@ HINSTANCE hInst;                                // 現在のインターフェ�
 WCHAR szTitle[MAX_LOADSTRING];                  // タイトル バーのテキスト
 WCHAR szWindowClass[MAX_LOADSTRING];            // メイン ウィンドウ クラス名
 int counter;
+int t;
 SYSTEMTIME stStart, stStop;
+std::ofstream output("output.csv");
 
 // このコード モジュールに含まれる関数の宣言を転送します:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -125,16 +128,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 //
 
-void calcElapse(const SYSTEMTIME& begin, const SYSTEMTIME& end, SYSTEMTIME& elapse)
+double calcElapse(const SYSTEMTIME& begin, const SYSTEMTIME& end)
 {
-
-}
-
-void printTime(HDC hdc, int x, int y, const SYSTEMTIME& st)
-{
-    TCHAR str[64];
-    wsprintf(str, TEXT("%02d:%02d:%02d:%02d"), st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-    TextOut(hdc, x, y, str, lstrlen(str));
+    double h = end.wHour - begin.wHour;
+    double m = end.wMinute - begin.wMinute;
+    double s = end.wSecond - begin.wSecond;
+    double ms = end.wMilliseconds - begin.wMilliseconds;
+    return ((h * 3600 + m * 60 + s) * 1000 + ms);
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -170,8 +170,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PostQuitMessage(0);
         break;
     case WM_CREATE:
+        t = 10;
         counter = 0;
-        SetTimer(hWnd, TimerID, 1, NULL);
+        SetTimer(hWnd, TimerID, t, NULL);
+        GetLocalTime(&stStart);
         break;
     case WM_CLOSE:
         KillTimer(hWnd, TimerID);
@@ -182,7 +184,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             return DefWindowProc(hWnd, message, wParam, lParam);
         }
-
+        counter++;
+        if (counter == 100)
+        {
+            GetLocalTime(&stStop);
+            KillTimer(hWnd, TimerID);
+            output << t << ",";
+            double result = calcElapse(stStart, stStop);
+            output << result << "\n";
+            t++;
+            counter = 0;
+            if (t <= 60)
+            {
+                SetTimer(hWnd, TimerID, t, NULL);
+                GetLocalTime(&stStart);
+            }
+            else
+            {
+                output.close();
+                KillTimer(hWnd, TimerID);
+                DestroyWindow(hWnd);
+            }
+        }
+        break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
