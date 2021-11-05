@@ -172,6 +172,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
         t = 10;
         counter = 0;
+        output << "to(ms): ti(ms)" << "," << "tr(ms)" << "\n";
         SetTimer(hWnd, TimerID, t, NULL);
         GetLocalTime(&stStart);
         break;
@@ -191,7 +192,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             KillTimer(hWnd, TimerID);
             output << t << ",";
             double result = calcElapse(stStart, stStop);
-            output << result << "\n";
+            output << (result / 100) << "\n";
             t++;
             counter = 0;
             if (t <= 60)
